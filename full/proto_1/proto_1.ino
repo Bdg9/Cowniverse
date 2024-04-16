@@ -1,4 +1,5 @@
 #include <Adafruit_PWMServoDriver.h>                             //Include the PWM Driver library
+#include <RF24.h> // download library by TMRh20 last version (1.4.8)
 
 #define DFR 0 //door front right
 #define DFL 1 //door front left
@@ -9,6 +10,13 @@
 
 #define DIR 8
 #define PUL 9
+
+// Radio settings
+#define CE_PIN 4
+#define CSN_PIN 7
+RF24 radio(CE_PIN, CSN_PIN);
+const uint64_t address = "Butt1";
+
 
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x40);    //Create an object of board 1
 
@@ -30,7 +38,7 @@ int trajet;
 int state_bigDome;
 int last_state_bigDome = LOW;
 const int speed = 2000;
-const int bigDome = 2;
+// const int bigDome = 2; 
 const int nb_rev_trajet_1 = 1890;
 const int nb_rev_trajet_2 = 2065;
 
@@ -65,12 +73,37 @@ void setup() {
   delay(10);
   pwm.setPWM(DHL, 0, dl_min);
   delay(500);
+  
+  if (!radio.begin()) {
+    //while (1) {}// hold in infinite loop
+      Serial.println("Could not turn radio on");  
+  }else{
+    Serial.println("Radio successfully turned on, now listening");
+  }
+  // radio settings
+  radio.setPALevel(RF24_PA_LOW);
+  radio.setPayloadSize(4); // sizeof("Meuh")
+  radio.setChannel(108); // 0 to 127
+  radio.setPALevel (RF24_PA_LOW); // for now //transmitter power level. To choose RF24_PA_MIN, RF24_PA_LOW, RF24_PA_HIGH, RF24_PA_MAX
+  radio.setDataRate (RF24_250KBPS); //exchange rate. To choose RF24_2MBPS, RF24_1MBPS, RF24_250KBPS
+  
+  //set the address for communication and set module as receiver
+  radio.openReadingPipe(0, address); // 0 to 5 is the pipe to be opened 
+  radio.startListening();
+    
 
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  state_bigDome = digitalRead(bigDome);
+  // state_bigDome = digitalRead(bigDome); //uncomment for physically wired button
+  if (radio.available()){
+    char text[5] = {0};
+    radio.read(&text, sizeof(text));
+    Serial.println(text);
+    state_bigDome = HIGH;
+  }
+
 
   if (state_bigDome != last_state_bigDome) { // trajet 1
     if ((trajet == 1) && (state_bigDome == HIGH)) {
