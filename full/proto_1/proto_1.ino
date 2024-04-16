@@ -71,6 +71,8 @@ void setup() {
   pwm.setPWM(DHR, 0, dr_max);
   delay(10);
   pwm.setPWM(DHL, 0, dl_min);
+  delay(10);
+  pwm.setPWM(GATE, 0, gate_min);
   delay(500);
   
   if (!radio.begin()) {
