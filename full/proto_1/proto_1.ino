@@ -38,7 +38,7 @@ int trajet;
 int state_bigDome;
 int last_state_bigDome = LOW;
 const int speed = 2000;
-// const int bigDome = 2; 
+const int bigDome = 2; 
 const int nb_rev_trajet_1 = 1890;
 const int nb_rev_trajet_2 = 2065;
 
@@ -53,7 +53,6 @@ void setup() {
   // for stepper motor driver
   pinMode(PUL,OUTPUT); // PUL
   pinMode(DIR,OUTPUT); // DIR
-  // for stepper motor button
   pinMode(bigDome, INPUT);
   // serial
   Serial.begin(9600);
@@ -95,7 +94,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  // state_bigDome = digitalRead(bigDome); //uncomment for physically wired button
+  state_bigDome = digitalRead(bigDome); //uncomment for physically wired button
   if (radio.available()){
     char text[5] = {0};
     radio.read(&text, sizeof(text));
@@ -107,7 +106,6 @@ void loop() {
   if (state_bigDome != last_state_bigDome) { // trajet 1
     if ((trajet == 1) && (state_bigDome == HIGH)) {
       open_hind_doors();
-      open_front_doors();
       turn_stepper(nb_rev_trajet_1);
       close_hind_doors();
       trajet = 2;
@@ -115,11 +113,9 @@ void loop() {
     }
 
     if ((trajet == 2) && (state_bigDome == HIGH)) {
-      open_gate();
-      open_front_doors();
+      open_gate_front_doors();
       turn_stepper(nb_rev_trajet_2);
-      close_gate();
-      close_front_doors(); 
+      close_gate_front_doors();
       trajet = 1;    
     }
     delay(50);
@@ -139,7 +135,6 @@ void open_front_doors(){
 }
 
 void open_hind_doors(){
-  Serial.print("closing front doors");
   for (int i = 0 ; i <= 225 ; i++){
     pwm.setPWM(DHL, 0, dl_min + i);
     pwm.setPWM(DHR, 0, dr_max - i);
@@ -174,6 +169,28 @@ void open_gate(){
 void close_gate(){
     for (int i = 0 ; i <= 135 ; i++){
     pwm.setPWM(GATE, 0, gate_max - i);
+    delay(DELAY_SERVO);
+  }
+}
+
+void open_gate_front_doors(){
+  for (int i = 0 ; i <= 225 ; i++){
+    pwm.setPWM(DFL, 0, dl_min + i);
+    pwm.setPWM(DFR, 0, dr_max - i);
+    if (i<=135){
+      pwm.setPWM(GATE, 0, gate_min + i);
+    }
+    delay(DELAY_SERVO);
+  }
+}
+
+void close_gate_front_doors(){
+  for (int i = 0 ; i <= 225 ; i++){
+    pwm.setPWM(DFL, 0, dl_max - i);
+    pwm.setPWM(DFR, 0, dr_min + i);
+    if (i<=135){
+      pwm.setPWM(GATE, 0, gate_max - i);
+    }
     delay(DELAY_SERVO);
   }
 }
