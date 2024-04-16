@@ -7,12 +7,16 @@
 #define GATE 4 //gate
 #define DELAY_SERVO 10
 
+#define DIR 8
+#define PUL 9
+
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x40);    //Create an object of board 1
 
 int servoMin =  135;        // This is the servos minimum pulse length count (out of 4096)
 int servoMax =  360;        // This is the servos maximum pulse length count (out of 4096)
 int servoFrequency = 50;    // Servo update frequency, analog servos typically run at ~50 Hz
 
+//default pulse length for servos
 int dl_min = 135;
 int dl_max = 360;
 int dr_min = 235;
@@ -20,12 +24,14 @@ int dr_max = 425;
 int gate_min = 135;
 int gate_max = 270;
 
-int pos_door_fr = 0;
-int pos_door_fl = 180;
-int pos_door_hl = 0;
-int pos_door_hr = 180;
+//variables for stepper motor 
+int x;
+int trajet = 1;
+int state_bigDome;
+int last_state_bigDome = HIGH;
+const int speed = 2000;
+const int bigDome = 2;
 
-int pos_gate = 0;
 
 void setup() {
   // put your setup code here, to run once:
@@ -34,6 +40,17 @@ void setup() {
   pwm.setOscillatorFrequency(27000000);    //Set the PWM oscillator frequency, used for fine calibration
   pwm.setPWMFreq(servoFrequency);          //Set the servo operating frequency
 
+  // for stepper motor driver
+  pinMode(PUL, OUTPUT); 
+  pinMode(DIR, OUTPUT); 
+  // for stepper motor button
+  pinMode(bigDome, INPUT);
+  // serial
+  // Serial.begin(9600);
+  // delay(3000);
+  // Serial.println(trajet);
+
+  //puts servos at the right position
   pwm.setPWM(DFR, 0, dr_min);
   delay(10);
   pwm.setPWM(DFL, 0, dl_min);
@@ -41,8 +58,8 @@ void setup() {
   pwm.setPWM(DHR, 0, dr_max);
   delay(10);
   pwm.setPWM(DHL, 0, dl_min);
-  delay(10);
-  Serial.begin(9600);
+  delay(500);
+
 }
 
 void loop() {
