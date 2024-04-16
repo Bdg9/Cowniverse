@@ -22,7 +22,6 @@ void setup()
     Serial.println("Radio successfully turned on");
   }
   // radio settings
-  radio.setPALevel(RF24_PA_LOW);
   radio.setPayloadSize(4); // sizeof("Meuh")
   radio.setChannel(108); // 0 to 127
   radio.setPALevel (RF24_PA_LOW); // for now //transmitter power level. To choose RF24_PA_MIN, RF24_PA_LOW, RF24_PA_HIGH, RF24_PA_MAX
