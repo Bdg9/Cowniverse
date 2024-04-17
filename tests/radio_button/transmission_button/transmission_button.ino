@@ -24,15 +24,16 @@ void setup()
     Serial.println("Radio successfully turned on");
   }
   // radio settings
-  radio.setPayloadSize(4); // sizeof("Meuh")
-  radio.setChannel(108); // 0 to 127
-  radio.setPALevel (RF24_PA_LOW); // for now //transmitter power level. To choose RF24_PA_MIN, RF24_PA_LOW, RF24_PA_HIGH, RF24_PA_MAX
-  radio.setDataRate (RF24_250KBPS); //exchange rate. To choose RF24_2MBPS, RF24_1MBPS, RF24_250KBPS
+  //radio.setPayloadSize(6); // sizeof("Meuh")
+  //radio.setChannel(108); // 0 to 127
+  //radio.setPALevel (RF24_PA_MAX); // for now //transmitter power level. To choose RF24_PA_MIN, RF24_PA_LOW, RF24_PA_HIGH, RF24_PA_MAX
+  //radio.setDataRate (RF24_250KBPS); //exchange rate. To choose RF24_2MBPS, RF24_1MBPS, RF24_250KBPS
   
   //set the address for communication and set module as transmitter
   radio.openWritingPipe(address);
   radio.stopListening();//Set module as transmitter
-  
+  radio.setRetries(15,10);
+
   pinMode(pushButton, INPUT);
 }
 
@@ -44,7 +45,8 @@ void loop()
   if(buttonState != last_state){
     if (buttonState == HIGH){
       bool transmit = radio.write(&text, sizeof(text));
-      if(transmit){
+      radio.write(&text,sizeof(text));
+      if(transmit){  
         Serial.println("Message Sent & Acknowledged");
       }
       Serial.println("Button pressed");
@@ -52,5 +54,4 @@ void loop()
     delay(50);
   }
   last_state = buttonState;
-  
 }
