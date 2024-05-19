@@ -84,7 +84,6 @@ void loop() {
   if (buttonBackLastState != buttonBackState){
     if (buttonBackState == HIGH){
       motorState = BACKWARD;
-      Serial.println("Backward");
     }
   }
 
@@ -130,10 +129,5 @@ void loop() {
       analogWrite(ENA, 0);  
       break;
   }
-
-
-  //prints for debug
-  //Serial.print("sensor value : ");
-  //Serial.println(l_door.get_front_sensor());
   
 }
