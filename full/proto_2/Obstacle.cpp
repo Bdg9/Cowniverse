@@ -1,5 +1,6 @@
 // Obstacle.cpp
 #include "Obstacle.h"
+#include "States.h"
 
 Obstacle::Obstacle(Servo &s) : servo(s){
 }
@@ -11,7 +12,7 @@ void Obstacle::init(int servo_pin, int f_sensor_pin, int opened, int closed){
     opened_pos = opened;
     closed_pos = closed;
     //set init state
-    state = Closed;
+    state = CLOSED;
     //go to init state
     servo.write(closed_pos);
     //update pos
@@ -30,24 +31,22 @@ int Obstacle::get_front_sensor(){
     return front_sensor;
 }
 
-void Obstacle::update(bool button){
+bool Obstacle::update(bool button){
     front_sensor = analogRead(front_sensor_pin);
 
-    if((state == Closed) && button && (front_sensor > THRESHOLD)){
-      state = Opening;
-      Serial.println("opening");
-    }else if((state == Opened) && button && (front_sensor > THRESHOLD)){
-      state = Closing;
-      Serial.println("closing");
+    if((state == CLOSED) && button && (front_sensor > THRESHOLD)){
+      state = OPENING;
+    }else if((state == OPENED) && button && (front_sensor > THRESHOLD)){
+      state = CLOSING;
     }
 
-    if(state == Closing){
+    if(state == CLOSING){
     if (opened_pos < closed_pos){
         pos +=1;
     }else{
         pos -=1;
     }
-    }else if(state == Opening){
+    }else if(state == OPENING){
     if (opened_pos < closed_pos){
         pos -= 1;
     }else{
@@ -56,10 +55,12 @@ void Obstacle::update(bool button){
     }
 
     if(pos == opened_pos){
-    state = Opened;
+    state = OPENED;
     }else if(pos == closed_pos){
-    state = Closed;
+    state = CLOSED;
     }
 
     servo.write(pos);
+
+    return (front_sensor > THRESHOLD);
 }

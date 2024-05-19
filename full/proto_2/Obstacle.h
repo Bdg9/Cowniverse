@@ -4,15 +4,9 @@
 
 #include <Arduino.h>
 #include <Servo.h>
+#include "States.h"
 
-#define THRESHOLD 900
-
-enum State{
-  Closed, //0
-  Opening,//1
-  Opened, //2
-  Closing,//3
-};
+#define THRESHOLD 950
 
 class Obstacle {
   private:
@@ -23,13 +17,13 @@ class Obstacle {
     int front_sensor;
     int front_sensor_pin;
   public:
-    enum State state;
+    enum ObsState state;
 
     Obstacle(Servo &s);
     void init(int servo_pin, int front_sensor_pin, int opened, int closed);
     int get_position();
     int get_front_sensor();
-    void update(bool button);
+    bool update(bool button);
 };
 
 #endif // OBSTACLE_H
