@@ -6,7 +6,7 @@
 #include <Servo.h>
 #include "States.h"
 
-#define THRESHOLD 950
+#define THRESHOLD 100
 
 class Obstacle {
   private:
@@ -15,15 +15,19 @@ class Obstacle {
     int opened_pos;
     int closed_pos;
     int front_sensor;
+    int back_sensor;
     int front_sensor_pin;
+    int back_sensor_pin;
+    MotorState lastMotorState;
   public:
     enum ObsState state;
 
     Obstacle(Servo &s);
-    void init(int servo_pin, int front_sensor_pin, int opened, int closed);
+    void init(int servo_pin, int front_sensor_pin, int b_sensor_pin, int opened, int closed);
     int get_position();
     int get_front_sensor();
-    bool update(bool button);
+    ObsState get_state();
+    bool update(bool button, MotorState motorState);
 };
 
 #endif // OBSTACLE_H

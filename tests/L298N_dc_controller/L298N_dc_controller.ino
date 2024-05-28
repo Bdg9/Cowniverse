@@ -3,20 +3,22 @@
 #define IN1 8
 #define IN2 7
 
+const int speed = 200;
+
 void setup() {
   // Set the motor control pins as outputs
-  pinMode(ENA, OUTPUT);
+  //pinMode(ENA, OUTPUT);
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
 }
 
 void loop() {
   // Move the motor in one direction
-  digitalWrite(IN1, HIGH);
+  digitalWrite(IN1, speed);
   digitalWrite(IN2, LOW);
-  analogWrite(ENA, 255); // Full speed
+  //analogWrite(ENA, speed); // Full speed
 
-  delay(2000); // Wait for 2 seconds
+  delay(10000); // Wait for 2 seconds
 
   // Stop the motor
   digitalWrite(IN1, LOW);
@@ -26,10 +28,10 @@ void loop() {
 
   // Move the motor in the other direction
   digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
-  analogWrite(ENA, 255); // Full speed
+  digitalWrite(IN2, -speed);
+  //analogWrite(ENA, speed); // Full speed
 
-  delay(2000); // Wait for 2 seconds
+  delay(10000); // Wait for 2 seconds
 
   // Stop the motor
   digitalWrite(IN1, LOW);

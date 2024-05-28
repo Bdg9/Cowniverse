@@ -5,7 +5,7 @@
 Obstacle::Obstacle(Servo &s) : servo(s){
 }
 
-void Obstacle::init(int servo_pin, int f_sensor_pin, int opened, int closed){
+void Obstacle::init(int servo_pin, int f_sensor_pin, int b_sensor_pin, int opened, int closed){
     //attach servo to its pin
     servo.attach(servo_pin);
     //set opened and closed pos
@@ -13,6 +13,7 @@ void Obstacle::init(int servo_pin, int f_sensor_pin, int opened, int closed){
     closed_pos = closed;
     //set init state
     state = CLOSED;
+    lastMotorState = STOP;
     //go to init state
     servo.write(closed_pos);
     //update pos
@@ -20,7 +21,9 @@ void Obstacle::init(int servo_pin, int f_sensor_pin, int opened, int closed){
 
     //initialize front sensor
     front_sensor_pin = f_sensor_pin;
+    back_sensor_pin = b_sensor_pin;
     pinMode(front_sensor_pin, INPUT);
+    pinMode(back_sensor_pin, INPUT);
 }
 
 int Obstacle::get_position(){
@@ -31,12 +34,26 @@ int Obstacle::get_front_sensor(){
     return front_sensor;
 }
 
-bool Obstacle::update(bool button){
-    front_sensor = analogRead(front_sensor_pin);
+ObsState Obstacle::get_state(){
+  return state;
+}
+
+bool Obstacle::update(bool button, MotorState motorState){
+    if (motorState != STOP){
+      lastMotorState = motorState;
+    }
+
+    if (lastMotorState == FORWARD){
+      front_sensor = analogRead(front_sensor_pin);
+      back_sensor = analogRead(back_sensor_pin);
+    }else{ //inverse back and front if the motor is in the other direction
+      front_sensor = analogRead(back_sensor_pin);
+      back_sensor = analogRead(front_sensor_pin);
+    }
 
     if((state == CLOSED) && button && (front_sensor > THRESHOLD)){
       state = OPENING;
-    }else if((state == OPENED) && button && (front_sensor > THRESHOLD)){
+    }else if((state == OPENED) && (back_sensor > THRESHOLD)){
       state = CLOSING;
     }
 
