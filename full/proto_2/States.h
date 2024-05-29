@@ -15,4 +15,15 @@ enum ObsState {
   CLOSING //3
 };
 
+enum Sound {
+  MARLEY,
+  NARUTO,
+  POULE,
+  PIG,
+  COW,
+  YAY,
+  BRAKE,
+  NONE
+};
+
 #endif
