@@ -17,7 +17,7 @@
 #define B_OBS 2
 
 //init audio
-SoftwareSerial mySerial(19, 18); // RX, TX
+SoftwareSerial mySerial(14, 15); // RX, TX
 // Initialiser DFPlayer
 DFPlayerMini_Fast myDFPlayer;
 
@@ -44,6 +44,7 @@ int buttonBackLastState = LOW;
 
 //motor state
 MotorState motorState = STOP;
+Sound sound = NONE;
 
 //detection timer
 unsigned long detection_timer = 0;
@@ -107,6 +108,7 @@ void loop() {
   if (buttonBackLastState != buttonBackState){
     if (buttonBackState == HIGH){
       motorState = BACKWARD;
+      sound = YAY;
     }
   }
 
@@ -142,6 +144,40 @@ void loop() {
     default:
       digitalWrite(IN1, LOW);
       digitalWrite(IN2, LOW);
+      break;
+  }
+
+   switch (sound){
+    case MARLEY:
+      myDFPlayer.play(0);
+      sound = NONE;
+      break;
+    case NARUTO:
+      myDFPlayer.play(1);
+      sound = NONE;
+      break;
+    case POULE:
+      myDFPlayer.play(2);
+      sound = NONE;
+      break;
+    case PIG:
+      myDFPlayer.play(5);
+      sound = NONE;
+      break;
+    case COW:
+      myDFPlayer.play(6);
+      sound = NONE;
+      break;
+    case YAY:
+      myDFPlayer.play(2);
+      sound = NONE;
+      Serial.println("yay");
+      break;
+    case BRAKE:
+      myDFPlayer.play(8);
+      sound = NONE;
+      break;
+    case NONE:
       break;
   }
   
