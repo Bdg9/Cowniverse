@@ -1,12 +1,9 @@
 #include <SPI.h>
 #include <RF24.h>
-// The transmitter is the digispark 
-// The pin numbers are the ones written on the ports 
 
-#define CE_PIN 9 //3 //digispark
-#define CSN_PIN 8//4 //digispark
-//create an RF24 object
-RF24 radio(CE_PIN, CSN_PIN);  // CE, CSN
+#define CE_PIN 9 
+#define CSN_PIN 10
+RF24 radio(CE_PIN, CSN_PIN); 
 
 const int pushButton = 5; // P5 is the only port left
 int last_state;
