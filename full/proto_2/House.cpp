@@ -5,7 +5,7 @@
 House::House(Servo &s1, Servo &s2) : servo1(s1), servo2(s2){
 }
 
-void House::init(int servo_pin_1, int servo_pin_2, int sensor_pin, int opened_1, int closed_1, int opened_2, int closed_2){
+void House::init(int servo_pin_1, int servo_pin_2, int s_pin, int opened_1, int closed_1, int opened_2, int closed_2){
     //attach servo to its pin
     servo1.attach(servo_pin_1);
     servo2.attach(servo_pin_2);
@@ -25,12 +25,12 @@ void House::init(int servo_pin_1, int servo_pin_2, int sensor_pin, int opened_1,
     pos_2 = servo2.read();
 
     //initialize sensor
-    sensor_pin = sensor_pin;
+    sensor_pin = s_pin;
     pinMode(sensor_pin, INPUT);
 }
 
 int House::get_sensor(){
-    return sensor;
+    return analogRead(sensor_pin);
 }
 
 ObsState House::get_state(){
@@ -38,15 +38,19 @@ ObsState House::get_state(){
 }
 
 bool House::update(bool button, MotorState motorState){
+    static unsigned long openTime = 0;  // Time when the house was opened
+
+
     if (motorState != STOP){
       lastMotorState = motorState;
     }
-
+    
     sensor = analogRead(sensor_pin);
 
-    if((state == CLOSED) && button && (sensor > THRESHOLD)){
+    if((state == CLOSED) && button){
       state = OPENING;
-    }else if((state == OPENED) && (sensor > THRESHOLD)){
+      openTime = millis();
+    }else if((state == OPENED) && (sensor > THRESHOLD) && ((millis() - openTime >= DELAY_CLOSE) || button)){
       state = CLOSING;
     }
 

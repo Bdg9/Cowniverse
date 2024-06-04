@@ -1,6 +1,7 @@
 #include <Servo.h>
 #include "Obstacle.h"
 #include "States.h"
+#include "House.h"
 //librairies audio
 #include <DFPlayerMini_Fast.h>
 #include <SoftwareSerial.h>
@@ -9,12 +10,21 @@
 #define ENA 9
 #define IN1 8
 #define IN2 7
-#define SPEED 110
+#define SPEED 90
 
 // Define buttons pin
 #define B_FORWARD 4
 #define B_BACKWARD 3
 #define B_OBS 2
+
+// Define servos pin
+#define BAR_1 11
+#define BAR_2 10
+#define HOUSE_L 13
+#define HOUSE_R 12 
+
+//debug prints
+bool verbose = false;
 
 //init audio
 SoftwareSerial mySerial(14, 15); // RX, TX
@@ -28,6 +38,11 @@ Obstacle bar_1(bar_1_servo);
 //right door
 Servo bar_2_servo;
 Obstacle bar_2(bar_2_servo);
+
+//house
+Servo house_1;
+Servo house_2;
+House house(house_1, house_2);
 
 //obstacle button
 int buttonObsState = LOW;
@@ -54,8 +69,12 @@ void setup() {
   Serial.begin(9600);
   mySerial.begin(9600); //begin serial for audio
 
-  bar_1.init(11, A1, A0, 70, 165);
-  bar_2.init(10, A3, A2, 90, 10);
+  //init gates
+  bar_1.init(BAR_1, A1, A0, 70, 165);
+  bar_2.init(BAR_2, A3, A2, 90, 10);
+
+  //init house
+  house.init(HOUSE_L, HOUSE_R, A4, 60, 0, 8, 60);
 
   // Set the buttons pin as outputs
   pinMode(B_OBS, INPUT);
@@ -77,6 +96,12 @@ void setup() {
   Serial.println("DFPlayer Mini prêt !");
 
   myDFPlayer.volume(5);  // (0-30)
+
+  //test sensor
+  if( (bar_1.get_front_sensor() > THRESHOLD) ||  (bar_1.get_back_sensor() > THRESHOLD) || (bar_2.get_front_sensor() > THRESHOLD) ||
+      (bar_2.get_back_sensor() > THRESHOLD) || (house.get_sensor() > THRESHOLD)){
+    Serial.println("ERROR : sensor obstructed");
+  }
   
 
   delay(100);
@@ -85,9 +110,32 @@ void setup() {
 void loop() {
   
   // check button
+  /*
   buttonObsState = digitalRead(B_OBS);
   buttonForwState = digitalRead(B_FORWARD);
   buttonBackState = digitalRead(B_BACKWARD);
+  */
+
+  //use serial instead of physical buttons
+  if (Serial.available() > 0) {
+    String receivedText = Serial.readStringUntil('\n'); // Read the incoming data until newline character
+
+    receivedText.trim(); // Remove any leading/trailing whitespace characters
+    
+    if (receivedText == "f") {
+      buttonForwState = HIGH;
+    } else if (receivedText == "b") {
+      buttonBackState = HIGH;
+    } else if (receivedText == "o") {
+      buttonObsState = HIGH;
+    } else {
+      Serial.println("Unknown command: " + receivedText);
+    }
+  }else{
+    buttonObsState = LOW;
+    buttonForwState = LOW;
+    buttonBackState = LOW;
+  }
 
   // check if the button is pressed
   if (buttonObsLastState != buttonObsState){
@@ -101,7 +149,6 @@ void loop() {
   if (buttonForwLastState != buttonForwState){
     if (buttonForwState == HIGH){
       motorState = FORWARD;
-      //myDFPlayer.play(4);
     }
   }
 
@@ -121,12 +168,16 @@ void loop() {
   //update the obstacles
   bool bar_1_update = bar_1.update(buttonObs, motorState);
   bool bar_2_update = bar_2.update(buttonObs, motorState);
+  bool house_update = house.update(buttonObs, motorState);
+
+  if (verbose){
+    Serial.println(house.get_state());
+  }
 
   //update the motors
   //stop motors if player is detected and the obstacle is closed
-  if((bar_1_update && !bar_1.get_state()) || (bar_2_update && !bar_2.get_state())){//(millis() - detection_timer < detection_interval){
+  if ((bar_1_update && !bar_1.get_state()) || (bar_2_update && !bar_2.get_state()) || (house_update && !house.get_state()) || (!house.get_state())){
     motorState = STOP;
-    //myDFPlayer.play(8);
   }
 
   switch (motorState) {

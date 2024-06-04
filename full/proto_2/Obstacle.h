@@ -26,6 +26,7 @@ class Obstacle {
     void init(int servo_pin, int front_sensor_pin, int b_sensor_pin, int opened, int closed);
     int get_position();
     int get_front_sensor();
+    int get_back_sensor();
     ObsState get_state();
     bool update(bool button, MotorState motorState);
 };

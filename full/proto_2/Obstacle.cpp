@@ -31,7 +31,11 @@ int Obstacle::get_position(){
 }
 
 int Obstacle::get_front_sensor(){
-    return front_sensor;
+  return analogRead(front_sensor_pin);
+}
+
+int Obstacle::get_back_sensor(){
+  return analogRead(back_sensor_pin);
 }
 
 ObsState Obstacle::get_state(){
@@ -53,7 +57,7 @@ bool Obstacle::update(bool button, MotorState motorState){
 
     if((state == CLOSED) && button && (front_sensor > THRESHOLD)){
       state = OPENING;
-    }else if((state == OPENED) && (back_sensor > THRESHOLD)){
+    }else if((state == OPENED) && (button || (back_sensor > THRESHOLD))){
       state = CLOSING;
     }
 
