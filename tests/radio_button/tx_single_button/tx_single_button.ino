@@ -1,10 +1,9 @@
 #include <SPI.h>
 #include <RF24.h>
 
-#define BWDbutt 2 
-#define FWDbutt 3 
-int last_fwd = 0;
-int last_bwd = 0;
+#define OBSbutt 3
+int last_obs = 0;
+
 
 #define CE_PIN 9
 #define CSN_PIN 10
@@ -28,39 +27,29 @@ void setup()
   //const char ack[] = "START";
   //while(! radio.write(&ack, sizeof(ack))){
     //digitalWrite(led,LOW);}
-  //turn LED outside of the box ON to signify ready to go and that box is ON
+  //turn LED outside of the box OFF to signify the program can transmit
   //digitalWrite(led,HIGH);
 
-  pinMode(FWDbutt, INPUT);
-  pinMode(BWDbutt, INPUT);
+  pinMode(OBSbutt, INPUT);
 }
 
 void loop()
 {
-  int fwdState = digitalRead(FWDbutt);
-  int bwdState = digitalRead(BWDbutt);
+  int obsState = digitalRead(OBSbutt);
 
-  const char fwd[] = "fwd";
-  const char bwd[] = "bwd";
-  char message[] = "fwd";
-  boolean send = false;
+  const char obs[] = "obs";
+  char message[] = "ini";
+  boolean send = false; //true
   
-  if(fwdState != last_fwd && fwdState == HIGH){
-      strcpy(message, fwd);
+  if(obsState != last_obs && obsState == HIGH){
+      strcpy(message, obs);
       send = true;
-      Serial.println("forward pressed");
+      Serial.println("obstacle pressed");
       delay(200);
   }
+   
   last_fwd = fwdState;
   
-  if(bwdState != last_bwd && bwdState == HIGH){
-      strcpy(message, bwd);
-      send = true;
-      Serial.println("backward pressed");
-      delay(200);
-  }
-  last_bwd = bwdState;
-
   if(send == true){
     if(! radio.write(&message, sizeof(message))){
         Serial.println("Could not transmit");
@@ -69,4 +58,5 @@ void loop()
       send = false;
     }
   }
+
 }
