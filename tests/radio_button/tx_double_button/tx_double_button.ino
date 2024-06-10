@@ -1,7 +1,7 @@
 #include <SPI.h>
 #include <RF24.h>
 
-#define BWDbutt 5 
+#define BWDbutt 2 
 #define FWDbutt 3 
 int last_fwd = 0;
 int last_bwd = 0;
@@ -18,24 +18,21 @@ void setup()
   }else{Serial.println("Radio successfully turned on");}
 
   // Radio settings
-  //radio.setPayloadSize(6); // sizeof("Meuh")
+  radio.setDataRate (RF24_250KBPS); //exchange rate. To choose RF24_2MBPS, RF24_1MBPS, RF24_250KBPS // 250 best
   radio.setChannel(108); // 0 to 127 // 108 above wifi freq bands
   radio.setPALevel (RF24_PA_LOW); //transmitter power level. To choose RF24_PA_MIN, RF24_PA_LOW, RF24_PA_HIGH, RF24_PA_MAX
-  radio.setDataRate (RF24_250KBPS); //exchange rate. To choose RF24_2MBPS, RF24_1MBPS, RF24_250KBPS // 250 best
   radio.openWritingPipe(address);
   radio.stopListening();//module = transmitter
-  //radio.setRetries(15,10);
   
   //TODO : start comm ack 
   //const char ack[] = "START";
   //while(! radio.write(&ack, sizeof(ack))){
-    //digitalWrite(led,HIGH);}
-  //turn LED outside of the box OFF to signify the program can transmit
-  //digitalWrite(led,LOW);
+    //digitalWrite(led,LOW);}
+  //turn LED outside of the box ON to signify ready to go and that box is ON
+  //digitalWrite(led,HIGH);
 
   pinMode(FWDbutt, INPUT);
   pinMode(BWDbutt, INPUT);
-  
 }
 
 void loop()
@@ -45,22 +42,21 @@ void loop()
 
   const char fwd[] = "fwd";
   const char bwd[] = "bwd";
-  char message[] = "ini";
+  char message[] = "fwd";
   boolean send = false;
   
   if(fwdState != last_fwd && fwdState == HIGH){
       strcpy(message, fwd);
       send = true;
-      //Serial.println("forward pressed");
+      Serial.println("forward pressed");
       delay(200);
   }
-   
   last_fwd = fwdState;
   
   if(bwdState != last_bwd && bwdState == HIGH){
       strcpy(message, bwd);
       send = true;
-      //Serial.println("backward pressed");
+      Serial.println("backward pressed");
       delay(200);
   }
   last_bwd = bwdState;
@@ -70,10 +66,7 @@ void loop()
         Serial.println("Could not transmit");
     }else{
       Serial.println(message);
-      //ici le send false
       send = false;
     }
-    
   }
-
 }
