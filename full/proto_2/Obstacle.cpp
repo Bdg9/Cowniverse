@@ -85,3 +85,35 @@ bool Obstacle::update(bool button, MotorState motorState){
 
     return (front_sensor > THRESHOLD);
 }
+
+bool Obstacle::update_continuous(bool button){
+    if((state == CLOSED) && (button)){
+      state = OPENING;
+    }else if((state == OPENED) && (button)){
+      state = CLOSING;
+    }
+
+    if(state == CLOSING){
+    if (opened_pos < closed_pos){
+        pos +=1;
+    }else{
+        pos -=1;
+    }
+    }else if(state == OPENING){
+    if (opened_pos < closed_pos){
+        pos -= 1;
+    }else{
+        pos += 1;
+    }
+    }
+
+    if(pos == opened_pos){
+    state = OPENED;
+    }else if(pos == closed_pos){
+    state = CLOSED;
+    }
+
+    servo.write(pos);
+
+    return false;
+}

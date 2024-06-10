@@ -89,3 +89,46 @@ bool House::update(bool button, MotorState motorState){
 
     return (sensor > THRESHOLD);
 }
+
+bool House::update_continuous(bool button){
+    if((state == CLOSED) && (button)){
+      state = OPENING;
+    }else if((state == OPENED) && (button)){
+      state = CLOSING;
+    }
+
+    if(state == CLOSING){
+    if (opened_pos_1 < closed_pos_1){
+        pos_1 +=1;
+    }else{
+        pos_1 -=1;
+    }
+    if (opened_pos_2 < closed_pos_2){
+        pos_2 +=1;
+    }else{
+        pos_2 -=1;
+    }
+    }else if(state == OPENING){
+    if (opened_pos_1 < closed_pos_1){
+        pos_1 -= 1;
+    }else{
+        pos_1 += 1;
+    }
+    if (opened_pos_2 < closed_pos_2){
+        pos_2 -= 1;
+    }else{
+        pos_2 += 1;
+    }
+    }
+
+    if(pos_1 == opened_pos_1){
+    state = OPENED;
+    }else if(pos_1 == closed_pos_1){
+    state = CLOSED;
+    }
+
+    servo1.write(pos_1);
+    servo2.write(pos_2);
+
+    return false;
+}

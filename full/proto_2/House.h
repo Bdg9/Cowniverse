@@ -30,6 +30,7 @@ class House {
     int get_sensor();
     ObsState get_state();
     bool update(bool button, MotorState motorState);
+    bool update_continuous(bool button);
 };
 
 #endif // HOUSE_H

@@ -26,4 +26,9 @@ enum Sound {
   NONE
 };
 
+enum GameMode {
+  SLOW,
+  CONTINUOUS,
+};
+
 #endif
