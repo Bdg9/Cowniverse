@@ -97,7 +97,7 @@ const int num_files_yay = sizeof(file_paths_yay) / sizeof(file_paths_yay[0]);
 const int num_files_cot = sizeof(file_paths_cot) / sizeof(file_paths_cot[0]);
 
 //debug prints
-bool verbose = true;
+bool verbose = false;
 
 // Initialiser DFPlayer
 DFRobot_DF1201S DF1201S;
@@ -332,7 +332,21 @@ void loop() {
     Serial.print(digitalRead(MODE_1));
     Serial.print("  mode_2 : ");
     Serial.println(digitalRead(MODE_2));*/
-    Serial.println(analogRead(A2));
+    Serial.print("A0 : ");
+    Serial.print(analogRead(A0));
+    Serial.print("  ");
+    Serial.print("A1 : ");
+    Serial.print(analogRead(A1));
+    Serial.print("  ");
+    Serial.print("A2 : ");
+    Serial.print(analogRead(A2));
+    Serial.print("  ");
+    Serial.print("A3 : ");
+    Serial.print(analogRead(A3));
+    Serial.print("  ");
+    Serial.print("A10 : ");
+    Serial.print(analogRead(A4));
+    Serial.println("  ");
   }
 
   //update the motors

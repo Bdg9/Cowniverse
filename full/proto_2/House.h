@@ -6,7 +6,7 @@
 #include <Servo.h>
 #include "States.h"
 
-#define THRESHOLD 100
+#define THRESHOLD 200
 #define DELAY_CLOSE 5000
 
 class House {
