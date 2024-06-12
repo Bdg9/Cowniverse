@@ -2,8 +2,10 @@
 #include "Obstacle.h"
 #include "States.h"
 #include "House.h"
-//librairies audio
+//librairy audio
 #include <DFRobot_DF1201S.h>
+//librairy leds
+#include <Adafruit_NeoPixel.h>
 
 // Define the motor control pins
 #define ENA 6
@@ -24,6 +26,11 @@
 #define BAR_2 10
 #define HOUSE_L 13
 #define HOUSE_R 12 
+
+// Define for leds
+#define LED_PIN     5     // Pin connecté à la bande de LEDs
+#define LED_COUNT   8    // Nombre de LEDs dans la bande
+#define BRIGHTNESS 50
 
 //file paths for audio
 const char* file_paths_meuh[] = {
@@ -90,11 +97,15 @@ const int num_files_yay = sizeof(file_paths_yay) / sizeof(file_paths_yay[0]);
 const int num_files_cot = sizeof(file_paths_cot) / sizeof(file_paths_cot[0]);
 
 //debug prints
-bool verbose = false;
+bool verbose = true;
 
 // Initialiser DFPlayer
 DFRobot_DF1201S DF1201S;
 int vol;
+
+// Init leds
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+
 
 //left door
 Servo bar_1_servo;
@@ -142,11 +153,11 @@ void setup() {
   Serial3.begin(115200); //begin serial for audio
 
   //init gates
-  bar_1.init(BAR_1, A1, A0, 70, 165);
-  bar_2.init(BAR_2, A3, A2, 90, 10);
+  bar_1.init(BAR_1, A1, A0, 50, 165);
+  bar_2.init(BAR_2, A3, A2, 165, 50);
 
   //init house
-  house.init(HOUSE_L, HOUSE_R, A4, 60, 0, 8, 60);
+  house.init(HOUSE_L, HOUSE_R, A4, 60, 10, 8, 50);
 
   // Set the buttons pin as outputs
   pinMode(B_OBS, INPUT);
@@ -174,6 +185,12 @@ void setup() {
   }else{
     character_type = COT;
   }
+
+  // Set up leds
+  strip.begin();
+  strip.show(); // Initialise toutes les LEDs à 'off'
+  strip.setBrightness(BRIGHTNESS);
+
 
   //setup audio
   // Initialisation du DFPlayer
@@ -282,30 +299,44 @@ void loop() {
     bar_1_update = bar_1.update(buttonObs, motorState);
     bar_2_update = bar_2.update(buttonObs, motorState);
     house_update = house.update(buttonObs, motorState);
+
+    //stop motors if player is detected and the obstacle is closed
+    if ((bar_1_update && !bar_1.get_state()) || (bar_2_update && !bar_2.get_state()) || (house_update && !house.get_state()) || (!house.get_state())){
+      motorState = STOP;
+    }
   }else{
-    bar_1_update = bar_1.update_continuous(buttonObs);
-    bar_2_update = bar_2.update_continuous(buttonObs);
+    bar_1_update = bar_1.update_continuous(buttonObs, motorState);
+    bar_2_update = bar_2.update_continuous(buttonObs, motorState);
     house_update = house.update_continuous(buttonObs);
   }
 
   if (house_update){
     sound = YAY;
   }
+
+  //update leds
+  if(bar_1_update || bar_2_update || house_update){
+    strip.fill(strip.Color(255, 0, 0)); // Red color
+  }else if(DF1201S.getFileName() == "/marley/marley1.mp3"){
+    setPattern();
+  }else{
+    strip.fill(strip.Color(0, 255, 0)); // Green color
+  }
+
+  strip.show();
   
 
   if (verbose){
     //Serial.println(house.get_state());
-    Serial.print("mode 1 :");
+    /*Serial.print("mode 1 :");
     Serial.print(digitalRead(MODE_1));
     Serial.print("  mode_2 : ");
-    Serial.println(digitalRead(MODE_2));
+    Serial.println(digitalRead(MODE_2));*/
+    Serial.println(analogRead(A2));
   }
 
   //update the motors
-  //stop motors if player is detected and the obstacle is closed
-  if ((bar_1_update && !bar_1.get_state()) || (bar_2_update && !bar_2.get_state()) || (house_update && !house.get_state()) || (!house.get_state())){
-    motorState = STOP;
-  }
+  
 
   switch (motorState) {
     case FORWARD:
@@ -325,7 +356,7 @@ void loop() {
       break;
   }
   
-   switch (sound){
+  switch (sound){
     case COT:
       playRandomSong(file_paths_cot, num_files_cot);
       sound = NONE;
@@ -369,4 +400,18 @@ void playRandomSong(const char* file_paths[], const int num_files) {
 
   // Play the selected file
   DF1201S.playSpecFile(randomFile);
+}
+
+void setPattern() {
+  // Couleurs à utiliser
+  uint32_t colors[] = {
+    strip.Color(255, 0, 0),   // Rouge
+    strip.Color(255, 255, 0), // Jaune
+    strip.Color(0, 255, 0)    // Vert
+  };
+
+  for (int i = 0; i < strip.numPixels(); i++) {
+    strip.setPixelColor(i, colors[i % 3]);
+  }
+  strip.show();
 }

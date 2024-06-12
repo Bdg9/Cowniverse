@@ -29,7 +29,7 @@ class Obstacle {
     int get_back_sensor();
     ObsState get_state();
     bool update(bool button, MotorState motorState);
-    bool update_continuous(bool button);
+    bool update_continuous(bool button, MotorState motorState);
 };
 
 #endif // OBSTACLE_H

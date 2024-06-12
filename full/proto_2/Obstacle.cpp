@@ -86,7 +86,19 @@ bool Obstacle::update(bool button, MotorState motorState){
     return (front_sensor > THRESHOLD);
 }
 
-bool Obstacle::update_continuous(bool button){
+bool Obstacle::update_continuous(bool button, MotorState motorState){
+    if (motorState != STOP){
+      lastMotorState = motorState;
+    }
+
+    if (lastMotorState == FORWARD){
+      front_sensor = analogRead(front_sensor_pin);
+      back_sensor = analogRead(back_sensor_pin);
+    }else{ //inverse back and front if the motor is in the other direction
+      front_sensor = analogRead(back_sensor_pin);
+      back_sensor = analogRead(front_sensor_pin);
+    }
+
     if((state == CLOSED) && (button)){
       state = OPENING;
     }else if((state == OPENED) && (button)){
@@ -115,5 +127,5 @@ bool Obstacle::update_continuous(bool button){
 
     servo.write(pos);
 
-    return false;
+    return (front_sensor > THRESHOLD);
 }

@@ -91,6 +91,8 @@ bool House::update(bool button, MotorState motorState){
 }
 
 bool House::update_continuous(bool button){
+    sensor = analogRead(sensor_pin);
+    
     if((state == CLOSED) && (button)){
       state = OPENING;
     }else if((state == OPENED) && (button)){
@@ -130,5 +132,5 @@ bool House::update_continuous(bool button){
     servo1.write(pos_1);
     servo2.write(pos_2);
 
-    return false;
+    return (sensor > THRESHOLD);
 }
