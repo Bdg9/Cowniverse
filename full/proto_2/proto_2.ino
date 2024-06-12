@@ -25,6 +25,70 @@
 #define HOUSE_L 13
 #define HOUSE_R 12 
 
+//file paths for audio
+const char* file_paths_meuh[] = {
+    "/meuh/Meuh1.mp3",
+    "/meuh/Meuh2.mp3",
+    "/meuh/Meuh3.mp3",
+    "/meuh/Meuh4.mp3",
+    "/meuh/Meuh5.mp3",
+    "/meuh/Meuh6.mp3",
+    "/meuh/Meuh7.mp3",
+    "/meuh/Meuh8.mp3",
+};
+
+const char* file_paths_bip[] = {
+  "/bipbip/Bip1.mp3",
+  "/bipbip/Bip2.mp3",
+  "/bipbip/Bip3.mp3",
+  "/bipbip/Bip4.mp3",
+  "/bipbip/Bip5.mp3",
+  "/bipbip/Bip6.mp3",
+};
+
+const char* file_paths_groin[] = {
+  "/groin/Groin1.mp3",
+  "/groin/Groin2.mp3",
+  "/groin/Groin3.mp3",
+  "/groin/Groin4.mp3",
+  "/groin/Groin5.mp3",
+  "/groin/Groin6.mp3",
+  "/groin/Groin7.mp3",
+};
+
+const char* file_paths_cot[] = {
+  "/poule/Poule5.mp3",
+  "/poule/Poule4.mp3",
+  "/poule/Poule3.mp3",
+  "/poule/Poule2.mp3",
+  "/poule/Poule1.mp3",
+};
+
+const char* file_paths_yay[] = {
+  "/marley/marley1.mp3",
+  "/yay/Hiphoura2.mp3",
+  "/yay/Houra1.mp3",
+  "/yay/titu.mp3",
+  "/yay/Uhou1.mp3",
+  "/yay/uhouai.mp3",
+  "/yay/uhu.mp3",
+  "/yay/vamos.mp3",
+  "/yay/Yay1.mp3",
+  "/yay/Yay2.mp3",
+  "/yay/Yay3.mp3",
+  "/yay/Yay4.mp3",
+  "/yay/Youpi1.mp3",
+  "/yay/Youpi2.mp3",
+  "/marley/marley1.mp3",
+  "/ohNo/Ohoh1.mp3",
+};
+
+const int num_files_meuh = sizeof(file_paths_meuh) / sizeof(file_paths_meuh[0]);
+const int num_files_bip = sizeof(file_paths_bip) / sizeof(file_paths_bip[0]);
+const int num_files_groin = sizeof(file_paths_groin) / sizeof(file_paths_groin[0]);
+const int num_files_yay = sizeof(file_paths_yay) / sizeof(file_paths_yay[0]);
+const int num_files_cot = sizeof(file_paths_cot) / sizeof(file_paths_cot[0]);
+
 //debug prints
 bool verbose = false;
 
@@ -67,6 +131,7 @@ bool house_update = false;
 
 //game mode 
 GameMode mode;
+Sound character_type;
 
 //detection timer
 unsigned long detection_timer = 0;
@@ -99,6 +164,17 @@ void setup() {
   //init game mode
   mode = read_mode();
 
+  //choose character type
+  int mode_1 = digitalRead(MODE_1);
+  int mode_2 = digitalRead(MODE_2);
+  if((mode_1 == HIGH) && (mode_2 == HIGH)){
+    character_type = COW;
+  }else if(mode_2 == HIGH){
+    character_type = PIG;
+  }else{
+    character_type = COT;
+  }
+
   //setup audio
   // Initialisation du DFPlayer
   while(!DF1201S.begin(Serial3)){
@@ -111,7 +187,7 @@ void setup() {
   Serial.println(mode);
   
   //Set volume to 15
-  DF1201S.setVol(25);
+  DF1201S.setVol(20);
   //deactivate prompts
   DF1201S.setPrompt(false);
   //Enter music mode
@@ -119,13 +195,20 @@ void setup() {
   //Set playback mode to "repeat all"
   DF1201S.setPlayMode(DF1201S.SINGLE);
 
+  delay(500);
+
   //test sensor
   if( (bar_1.get_front_sensor() > THRESHOLD) ||  (bar_1.get_back_sensor() > THRESHOLD) || (bar_2.get_front_sensor() > THRESHOLD) ||
       (bar_2.get_back_sensor() > THRESHOLD) || (house.get_sensor() > THRESHOLD)){
     Serial.println("ERROR : sensor obstructed");
+    DF1201S.playFileNum(/*File Number = */2);
+    delay(10000);
   }
 
-  delay(100);
+  DF1201S.playFileNum(/*File Number = */1);
+  delay(200);
+
+  
 }
 
 void loop() {
@@ -169,6 +252,7 @@ void loop() {
   if (buttonObsLastState != buttonObsState){
     if (buttonObsState == HIGH){
       buttonObs = true;
+      sound = BIP;
     }
   }else{
     buttonObs = false;
@@ -177,14 +261,13 @@ void loop() {
   if (buttonForwLastState != buttonForwState){
     if (buttonForwState == HIGH){
       motorState = FORWARD;
-      sound = COW;
+      sound = character_type;
     }
   }
 
   if (buttonBackLastState != buttonBackState){
     if (buttonBackState == HIGH){
       motorState = BACKWARD;
-      sound = BRAKE;
     }
   }
 
@@ -204,12 +287,18 @@ void loop() {
     bar_2_update = bar_2.update_continuous(buttonObs);
     house_update = house.update_continuous(buttonObs);
   }
+
+  if (house_update){
+    sound = YAY;
+  }
   
 
   if (verbose){
     //Serial.println(house.get_state());
-    Serial.print("mode :");
-    Serial.println(mode);
+    Serial.print("mode 1 :");
+    Serial.print(digitalRead(MODE_1));
+    Serial.print("  mode_2 : ");
+    Serial.println(digitalRead(MODE_2));
   }
 
   //update the motors
@@ -237,35 +326,24 @@ void loop() {
   }
   
    switch (sound){
-    case MARLEY:
-      //DF1201S.playFileNum(4);
-      sound = NONE;
-      break;
-    case NARUTO:
-      //DF1201S.playFileNum(4);
-      sound = NONE;
-      break;
-    case POULE:
-      //DF1201S.playFileNum(4);
+    case COT:
+      playRandomSong(file_paths_cot, num_files_cot);
       sound = NONE;
       break;
     case PIG:
-      //DF1201S.playFileNum(4);
+      playRandomSong(file_paths_groin, num_files_groin);
       sound = NONE;
       break;
     case COW:
-      Serial.println("cow");
-      DF1201S.playFileNum(3);
+      playRandomSong(file_paths_meuh, num_files_meuh);
       sound = NONE;
       break;
     case YAY:
-      Serial.println("yay");
-      DF1201S.playFileNum(4);
+      playRandomSong(file_paths_yay, num_files_yay);
       sound = NONE;
       break;
-    case BRAKE:
-      Serial.println("brake");
-      DF1201S.playFileNum(1);
+    case BIP:
+      playRandomSong(file_paths_bip, num_files_bip);
       sound = NONE;
       break;
     case NONE:
@@ -275,7 +353,6 @@ void loop() {
 }
 
 GameMode read_mode(){
-
   if(digitalRead(MODE_1) == HIGH){
     return SLOW;
   }else if(digitalRead(MODE_2) == HIGH){
@@ -283,5 +360,13 @@ GameMode read_mode(){
   }else{
     return SLOW;
   }
+}
 
+void playRandomSong(const char* file_paths[], const int num_files) {
+  // Select a random file path from the list
+  int randomIndex = random(num_files);
+  const char* randomFile = file_paths[randomIndex];
+
+  // Play the selected file
+  DF1201S.playSpecFile(randomFile);
 }

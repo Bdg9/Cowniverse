@@ -18,6 +18,16 @@ DFRobot_DF1201S DF1201S;
 int potpin = A7;  // analog pin used to connect the potentiometer
 int vol;    // variable to read the value from the analog pin
 
+
+const char* file_paths[] = {
+    "/meuh/Meuh1.mp3",
+    "/meuh/Meuh2.mp3",
+    "/meuh/Meuh3.mp3",
+    // Add more paths as needed
+};
+
+const int num_files = sizeof(file_paths) / sizeof(file_paths[0]);
+
 void setup(void){
   Serial.begin(9600);
   Serial.println("hello");
@@ -30,11 +40,11 @@ void setup(void){
   //Set volume to 15
   DF1201S.setVol(/*VOL = */15);
   //deactivate prompts
-  DF1201S.setPrompt(true);
+  DF1201S.setPrompt(false);
   //Enter music mode
   DF1201S.switchFunction(DF1201S.MUSIC);
   //Set playback mode to "repeat all"
-  DF1201S.setPlayMode(DF1201S.SINGLECYCLE);
+  DF1201S.setPlayMode(DF1201S.SINGLE);
 
 }
 
@@ -44,11 +54,26 @@ void loop(){
   //DF1201S.setVol(/*VOL = */vol);
 
   //Play the file No.1, the numbers are arranged according to the sequence of the files copied into the U-disk 
-  DF1201S.playFileNum(/*File Number = */4);
+  //DF1201S.playFileNum(/*File Number = */4);
   //Play the test.mp3 file in test folder 
-  //DF1201S.playSpecFile("04.mp3");
+  //DF1201S.playSpecFile("/meuh/Meuh7.mp3");
 
 
-  delay(5000);
+  // Play a random song from the list
+  //playRandomSong();
 
+  // Wait for some time before playing the next song
+  delay(5000); // 10 seconds delay
+
+}
+
+void playRandomSong() {
+  // Select a random file path from the list
+  int randomIndex = random(num_files);
+  const char* randomFile = file_paths[randomIndex];
+
+  // Play the selected file
+  DF1201S.playSpecFile(randomFile);
+  Serial.print("Playing: ");
+  Serial.println(randomFile);
 }

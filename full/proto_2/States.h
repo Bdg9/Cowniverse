@@ -16,13 +16,11 @@ enum ObsState {
 };
 
 enum Sound {
-  MARLEY,
-  NARUTO,
-  POULE,
   PIG,
   COW,
+  COT, //poule
   YAY,
-  BRAKE,
+  BIP,
   NONE
 };
 
