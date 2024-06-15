@@ -2,20 +2,24 @@
 #include "Obstacle.h"
 #include "States.h"
 #include "House.h"
-//librairies audio
-#include <DFPlayerMini_Fast.h>
-#include <SoftwareSerial.h>
+//librairy audio
+#include <DFRobot_DF1201S.h>
+//librairy leds
+#include <Adafruit_NeoPixel.h>
 
 // Define the motor control pins
-#define ENA 9
+#define ENA 6
 #define IN1 8
 #define IN2 7
 #define SPEED 90
 
 // Define buttons pin
-#define B_FORWARD 4
-#define B_BACKWARD 3
-#define B_OBS 2
+#define B_FORWARD 32
+#define B_BACKWARD 33
+#define B_OBS 34
+#define POT A10
+#define MODE_1 2
+#define MODE_2 3
 
 // Define servos pin
 #define BAR_1 11
@@ -23,13 +27,85 @@
 #define HOUSE_L 13
 #define HOUSE_R 12 
 
+// Define for leds
+#define LED_PIN     5     // Pin connecté à la bande de LEDs
+#define LED_COUNT   8    // Nombre de LEDs dans la bande
+#define BRIGHTNESS 50
+
+//file paths for audio
+const char* file_paths_meuh[] = {
+    "/meuh/Meuh1.mp3",
+    "/meuh/Meuh2.mp3",
+    "/meuh/Meuh3.mp3",
+    "/meuh/Meuh4.mp3",
+    "/meuh/Meuh5.mp3",
+    "/meuh/Meuh6.mp3",
+    "/meuh/Meuh7.mp3",
+    "/meuh/Meuh8.mp3",
+};
+
+const char* file_paths_bip[] = {
+  "/bipbip/Bip1.mp3",
+  "/bipbip/Bip2.mp3",
+  "/bipbip/Bip3.mp3",
+  "/bipbip/Bip4.mp3",
+  "/bipbip/Bip5.mp3",
+  "/bipbip/Bip6.mp3",
+};
+
+const char* file_paths_groin[] = {
+  "/groin/Groin1.mp3",
+  "/groin/Groin2.mp3",
+  "/groin/Groin3.mp3",
+  "/groin/Groin4.mp3",
+  "/groin/Groin5.mp3",
+  "/groin/Groin6.mp3",
+  "/groin/Groin7.mp3",
+};
+
+const char* file_paths_cot[] = {
+  "/poule/Poule5.mp3",
+  "/poule/Poule4.mp3",
+  "/poule/Poule3.mp3",
+  "/poule/Poule2.mp3",
+  "/poule/Poule1.mp3",
+};
+
+const char* file_paths_yay[] = {
+  "/marley/marley1.mp3",
+  "/yay/Hiphoura2.mp3",
+  "/yay/Houra1.mp3",
+  "/yay/titu.mp3",
+  "/yay/Uhou1.mp3",
+  "/yay/uhouai.mp3",
+  "/yay/uhu.mp3",
+  "/yay/vamos.mp3",
+  "/yay/Yay1.mp3",
+  "/yay/Yay2.mp3",
+  "/yay/Yay3.mp3",
+  "/yay/Yay4.mp3",
+  "/yay/Youpi1.mp3",
+  "/yay/Youpi2.mp3",
+  "/marley/marley1.mp3",
+  "/ohNo/Ohoh1.mp3",
+};
+
+const int num_files_meuh = sizeof(file_paths_meuh) / sizeof(file_paths_meuh[0]);
+const int num_files_bip = sizeof(file_paths_bip) / sizeof(file_paths_bip[0]);
+const int num_files_groin = sizeof(file_paths_groin) / sizeof(file_paths_groin[0]);
+const int num_files_yay = sizeof(file_paths_yay) / sizeof(file_paths_yay[0]);
+const int num_files_cot = sizeof(file_paths_cot) / sizeof(file_paths_cot[0]);
+
 //debug prints
 bool verbose = false;
 
-//init audio
-SoftwareSerial mySerial(14, 15); // RX, TX
 // Initialiser DFPlayer
-DFPlayerMini_Fast myDFPlayer;
+DFRobot_DF1201S DF1201S;
+int vol;
+
+// Init leds
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+
 
 //left door
 Servo bar_1_servo;
@@ -60,6 +136,13 @@ int buttonBackLastState = LOW;
 //motor state
 MotorState motorState = STOP;
 Sound sound = NONE;
+bool bar_1_update = false;
+bool bar_2_update = false;
+bool house_update = false;
+
+//game mode 
+GameMode mode;
+Sound character_type;
 
 //detection timer
 unsigned long detection_timer = 0;
@@ -67,55 +150,99 @@ const unsigned long detection_interval = 500;
 
 void setup() {
   Serial.begin(9600);
-  mySerial.begin(9600); //begin serial for audio
+  Serial3.begin(115200); //begin serial for audio
 
   //init gates
-  bar_1.init(BAR_1, A1, A0, 70, 165);
-  bar_2.init(BAR_2, A3, A2, 90, 10);
+  bar_1.init(BAR_1, A1, A0, 50, 165);
+  bar_2.init(BAR_2, A3, A2, 165, 50);
 
   //init house
-  house.init(HOUSE_L, HOUSE_R, A4, 60, 0, 8, 60);
+  house.init(HOUSE_L, HOUSE_R, A4, 60, 10, 8, 50);
 
   // Set the buttons pin as outputs
   pinMode(B_OBS, INPUT);
   pinMode(B_FORWARD, INPUT);
   pinMode(B_BACKWARD, INPUT);
+  pinMode(POT, INPUT);
+  pinMode(MODE_1, INPUT_PULLUP);
+  pinMode(MODE_2, INPUT_PULLUP);
 
   // Set the motor control pins as outputs
   pinMode(ENA, OUTPUT);
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
 
-  //setup audio
-  // Initialisation du DFPlayer
-  if (!myDFPlayer.begin(mySerial)) {
-    Serial.println("Impossible de communiquer avec le DFPlayer Mini !");
-    while (true);
+  //init game mode
+  mode = read_mode();
+
+  //choose character type
+  int mode_1 = digitalRead(MODE_1);
+  int mode_2 = digitalRead(MODE_2);
+  if((mode_1 == HIGH) && (mode_2 == HIGH)){
+    character_type = COW;
+  }else if(mode_2 == HIGH){
+    character_type = PIG;
+  }else{
+    character_type = COT;
   }
 
-  Serial.println("DFPlayer Mini prêt !");
+  // Set up leds
+  strip.begin();
+  strip.show(); // Initialise toutes les LEDs à 'off'
+  strip.setBrightness(BRIGHTNESS);
 
-  myDFPlayer.volume(5);  // (0-30)
+
+  //setup audio
+  // Initialisation du DFPlayer
+  while(!DF1201S.begin(Serial3)){
+    Serial.println("Init failed, please check the wire connection!");
+    delay(1000);
+  }
+
+  Serial.println("audio ready");
+  Serial.print("mode :");
+  Serial.println(mode);
+  
+  //Set volume to 15
+  DF1201S.setVol(20);
+  //deactivate prompts
+  DF1201S.setPrompt(false);
+  //Enter music mode
+  DF1201S.switchFunction(DF1201S.MUSIC);
+  //Set playback mode to "repeat all"
+  DF1201S.setPlayMode(DF1201S.SINGLE);
+
+  delay(500);
 
   //test sensor
   if( (bar_1.get_front_sensor() > THRESHOLD) ||  (bar_1.get_back_sensor() > THRESHOLD) || (bar_2.get_front_sensor() > THRESHOLD) ||
       (bar_2.get_back_sensor() > THRESHOLD) || (house.get_sensor() > THRESHOLD)){
     Serial.println("ERROR : sensor obstructed");
+    DF1201S.playFileNum(/*File Number = */2);
+    delay(10000);
   }
-  
 
-  delay(100);
+  DF1201S.playFileNum(/*File Number = */1);
+  delay(200);
+
+  
 }
 
 void loop() {
+  //change volume
+  vol = analogRead(POT);            // reads the value of the potentiometer (value between 0 and 1023)
+  vol = map(vol, 0, 1023, 0, 30);     // scale it for use with the servo (value between 0 and 180)
+  DF1201S.setVol(/*VOL = */vol);
+
+  //change mode
+  mode = read_mode();
   
   // check button
-  /*
   buttonObsState = digitalRead(B_OBS);
   buttonForwState = digitalRead(B_FORWARD);
   buttonBackState = digitalRead(B_BACKWARD);
-  */
-
+  
+  /*
   //use serial instead of physical buttons
   if (Serial.available() > 0) {
     String receivedText = Serial.readStringUntil('\n'); // Read the incoming data until newline character
@@ -128,6 +255,7 @@ void loop() {
       buttonBackState = HIGH;
     } else if (receivedText == "o") {
       buttonObsState = HIGH;
+      sound = YAY;
     } else {
       Serial.println("Unknown command: " + receivedText);
     }
@@ -135,12 +263,13 @@ void loop() {
     buttonObsState = LOW;
     buttonForwState = LOW;
     buttonBackState = LOW;
-  }
+  }*/
 
   // check if the button is pressed
   if (buttonObsLastState != buttonObsState){
     if (buttonObsState == HIGH){
       buttonObs = true;
+      sound = BIP;
     }
   }else{
     buttonObs = false;
@@ -149,13 +278,13 @@ void loop() {
   if (buttonForwLastState != buttonForwState){
     if (buttonForwState == HIGH){
       motorState = FORWARD;
+      sound = character_type;
     }
   }
 
   if (buttonBackLastState != buttonBackState){
     if (buttonBackState == HIGH){
       motorState = BACKWARD;
-      sound = YAY;
     }
   }
 
@@ -166,19 +295,62 @@ void loop() {
 
 
   //update the obstacles
-  bool bar_1_update = bar_1.update(buttonObs, motorState);
-  bool bar_2_update = bar_2.update(buttonObs, motorState);
-  bool house_update = house.update(buttonObs, motorState);
+  if (mode == SLOW){
+    bar_1_update = bar_1.update(buttonObs, motorState);
+    bar_2_update = bar_2.update(buttonObs, motorState);
+    house_update = house.update(buttonObs, motorState);
+
+    //stop motors if player is detected and the obstacle is closed
+    if ((bar_1_update && !bar_1.get_state()) || (bar_2_update && !bar_2.get_state()) || (house_update && !house.get_state()) || (!house.get_state())){
+      motorState = STOP;
+    }
+  }else{
+    bar_1_update = bar_1.update_continuous(buttonObs, motorState);
+    bar_2_update = bar_2.update_continuous(buttonObs, motorState);
+    house_update = house.update_continuous(buttonObs);
+  }
+
+  if (house_update){
+    sound = YAY;
+  }
+
+  //update leds
+  if(bar_1_update || bar_2_update || house_update){
+    strip.fill(strip.Color(255, 0, 0)); // Red color
+  }else if(DF1201S.getFileName() == "/marley/marley1.mp3"){
+    setPattern();
+  }else{
+    strip.fill(strip.Color(0, 255, 0)); // Green color
+  }
+
+  strip.show();
+  
 
   if (verbose){
-    Serial.println(house.get_state());
+    //Serial.println(house.get_state());
+    /*Serial.print("mode 1 :");
+    Serial.print(digitalRead(MODE_1));
+    Serial.print("  mode_2 : ");
+    Serial.println(digitalRead(MODE_2));*/
+    Serial.print("A0 : ");
+    Serial.print(analogRead(A0));
+    Serial.print("  ");
+    Serial.print("A1 : ");
+    Serial.print(analogRead(A1));
+    Serial.print("  ");
+    Serial.print("A2 : ");
+    Serial.print(analogRead(A2));
+    Serial.print("  ");
+    Serial.print("A3 : ");
+    Serial.print(analogRead(A3));
+    Serial.print("  ");
+    Serial.print("A10 : ");
+    Serial.print(analogRead(A4));
+    Serial.println("  ");
   }
 
   //update the motors
-  //stop motors if player is detected and the obstacle is closed
-  if ((bar_1_update && !bar_1.get_state()) || (bar_2_update && !bar_2.get_state()) || (house_update && !house.get_state()) || (!house.get_state())){
-    motorState = STOP;
-  }
+  
 
   switch (motorState) {
     case FORWARD:
@@ -197,39 +369,63 @@ void loop() {
       digitalWrite(IN2, LOW);
       break;
   }
-
-   switch (sound){
-    case MARLEY:
-      myDFPlayer.play(0);
-      sound = NONE;
-      break;
-    case NARUTO:
-      myDFPlayer.play(1);
-      sound = NONE;
-      break;
-    case POULE:
-      myDFPlayer.play(2);
+  
+  switch (sound){
+    case COT:
+      playRandomSong(file_paths_cot, num_files_cot);
       sound = NONE;
       break;
     case PIG:
-      myDFPlayer.play(5);
+      playRandomSong(file_paths_groin, num_files_groin);
       sound = NONE;
       break;
     case COW:
-      myDFPlayer.play(6);
+      playRandomSong(file_paths_meuh, num_files_meuh);
       sound = NONE;
       break;
     case YAY:
-      myDFPlayer.play(2);
+      playRandomSong(file_paths_yay, num_files_yay);
       sound = NONE;
-      Serial.println("yay");
       break;
-    case BRAKE:
-      myDFPlayer.play(8);
+    case BIP:
+      playRandomSong(file_paths_bip, num_files_bip);
       sound = NONE;
       break;
     case NONE:
       break;
   }
   
+}
+
+GameMode read_mode(){
+  if(digitalRead(MODE_1) == HIGH){
+    return SLOW;
+  }else if(digitalRead(MODE_2) == HIGH){
+    return CONTINUOUS;
+  }else{
+    return SLOW;
+  }
+}
+
+void playRandomSong(const char* file_paths[], const int num_files) {
+  // Select a random file path from the list
+  int randomIndex = random(num_files);
+  const char* randomFile = file_paths[randomIndex];
+
+  // Play the selected file
+  DF1201S.playSpecFile(randomFile);
+}
+
+void setPattern() {
+  // Couleurs à utiliser
+  uint32_t colors[] = {
+    strip.Color(255, 0, 0),   // Rouge
+    strip.Color(255, 255, 0), // Jaune
+    strip.Color(0, 255, 0)    // Vert
+  };
+
+  for (int i = 0; i < strip.numPixels(); i++) {
+    strip.setPixelColor(i, colors[i % 3]);
+  }
+  strip.show();
 }

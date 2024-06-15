@@ -6,7 +6,7 @@
 #include <Servo.h>
 #include "States.h"
 
-#define THRESHOLD 100
+#define THRESHOLD 200
 #define DELAY_CLOSE 5000
 
 class House {
@@ -30,6 +30,7 @@ class House {
     int get_sensor();
     ObsState get_state();
     bool update(bool button, MotorState motorState);
+    bool update_continuous(bool button);
 };
 
 #endif // HOUSE_H
