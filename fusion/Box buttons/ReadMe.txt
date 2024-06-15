@@ -1,0 +1,1 @@
+There were several adjustments, especially on the sides of the box so this model might not fit without some sanding.
