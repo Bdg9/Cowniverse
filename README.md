@@ -42,13 +42,9 @@ The `test` folder contains Arduino scripts used to test various subsystems of th
 To get started with the Cowniverse project:
 
 1. **Install Required Libraries**: Navigate to the `library` folder and install the required libraries for the `df_player pro`.
-2. **Build Prototypes**: Use the CAD files from the `fusion` folder to print or cut the necessary parts. Assemble the prototypes as per the instructions.
+2. **Build Prototypes**: Use the CAD files from the `fusion` folder to print or cut the necessary parts. Build the obstacles with wood. Assemble the prototype by referring to the project's report.
 3. **Upload Code**: Upload the relevant code from the `full` folder to your Arduino. Make sure to follow the specific instructions provided for each prototype.
 4. **Testing and Debugging**: Use the scripts in the `test` folder to test and debug individual subsystems as needed.
-
-## Contributing
-
-We welcome contributions to the Cowniverse project! If you have any ideas, improvements, or bug fixes, please feel free to submit a pull request or open an issue.
 
 ## Contact
 
