@@ -42,7 +42,7 @@ The `test` folder contains Arduino scripts used to test various subsystems of th
 For any questions or further information, please contact us one of us :
 - Gonçalo Braga : [gbraga2086@gmail.com]
 - Barbara De Groot : [irado1999@gmail.com] 
-- Loric Emmenegger :
+- Loric Emmenegger : [emmenegger.loric@gmail.com]
 - Jean-Baptiste Poussin : [poussin.jeanbaptiste@gmail.com]
 
 Happy coding, and welcome to the Cowniverse!
